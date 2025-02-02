@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useDebounce } from "react-use";
 import CardSkeleton from "./components/CardSkeleton";
 import MovieCard from "./components/MovieCard";
 import Search from "./components/search";
@@ -15,11 +16,21 @@ function App() {
   const [searchTerm, setSearchTerm] = useState("");
   const [movies, setMovies] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
-  const fetchMovie = async () => {
+  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
+  useDebounce(
+    () => {
+      setDebouncedSearchTerm(searchTerm);
+    },
+    500,
+    [searchTerm]
+  );
+  const fetchMovie = async (query = "") => {
     setIsLoading(true);
     try {
       const response = await fetch(
-        "api/discover/movie?sort_by=popularity.desc",
+        query
+          ? `api/search/movie?query=${encodeURIComponent(query)}`
+          : "api/discover/movie?sort_by=popularity.desc",
         API_OPTIONS
       );
       const data = await response.json();
@@ -33,8 +44,8 @@ function App() {
     }
   };
   useEffect(() => {
-    fetchMovie();
-  }, []);
+    fetchMovie(debouncedSearchTerm);
+  }, [debouncedSearchTerm]);
   return (
     <main>
       <div className="pattern" />
@@ -48,7 +59,11 @@ function App() {
           <Search searchTerm={searchTerm} setSearchTerm={setSearchTerm} />
         </header>
         <section className="all-movies">
-          <h2>All Movies</h2>
+          <h2>
+            {debouncedSearchTerm
+              ? `Search Result Of: ${debouncedSearchTerm}`
+              : "All Movies"}
+          </h2>
           {isLoading ? (
             <div className="flex">
               {Array.from({ length: 3 }).map((_, index) => (
