@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useDebounce } from "react-use";
+import { updateSearchCount } from "./appwrite";
 import CardSkeleton from "./components/CardSkeleton";
 import MovieCard from "./components/MovieCard";
 import Search from "./components/search";
@@ -34,8 +35,12 @@ function App() {
         API_OPTIONS
       );
       const data = await response.json();
+
       if (data.Response === "False") throw new Error("Something went wrong");
       setMovies(data.results);
+      if (query && data.results.length > 0) {
+        updateSearchCount(query, data.results[0]);
+      }
     } catch (error) {
       setIsError(true);
       console.log(error);
